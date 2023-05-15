@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "knex": "node --loader tsx ./node_modules/knex/bin/cli.js",
+    "knex": "node --loader --no-warnings tsx ./node_modules/knex/bin/cli.js",
     "lint": "eslint src --ext .ts --fix",
     "build": "tsup src --out-dir build --external supertest",
     "test": "vitest"
