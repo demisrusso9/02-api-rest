@@ -8,30 +8,32 @@ export async function transactionRoutes(app: FastifyInstance) {
   app.get(
     '/',
     {
-      preHandler: checkSessionIdExists
+      preHandler: checkSessionIdExists,
     },
     async (req, res) => {
       const { sessionId } = req.cookies
 
-      const transactions = await knex('transactions').select('*').where({ session_id: sessionId })
+      const transactions = await knex('transactions')
+        .select('*')
+        .where({ session_id: sessionId })
 
       return {
         total: transactions.length,
-        transactions
+        transactions,
       }
-    }
+    },
   )
 
   app.get(
     '/:id',
     {
-      preHandler: checkSessionIdExists
+      preHandler: checkSessionIdExists,
     },
     async (req, res) => {
       const { sessionId } = req.cookies
 
       const transactionSchema = z.object({
-        id: z.string().uuid()
+        id: z.string().uuid(),
       })
 
       const { id } = transactionSchema.parse(req.params)
@@ -39,40 +41,40 @@ export async function transactionRoutes(app: FastifyInstance) {
       const transaction = await knex('transactions')
         .where({
           session_id: sessionId,
-          id
+          id,
         })
         .first()
 
       if (transaction) return transaction
 
       return res.status(404).send()
-    }
+    },
   )
 
   app.get(
     '/summary',
     {
-      preHandler: checkSessionIdExists
+      preHandler: checkSessionIdExists,
     },
     async (req, res) => {
       const { sessionId } = req.cookies
 
       const summary = await knex('transactions')
         .where({
-          session_id: sessionId
+          session_id: sessionId,
         })
         .sum('amount', { as: 'amount' })
         .first()
 
       return summary
-    }
+    },
   )
 
   app.post('/', async (req, res) => {
     const createTransactionSchema = z.object({
       title: z.string(),
       amount: z.number(),
-      type: z.enum(['credit', 'debit'])
+      type: z.enum(['credit', 'debit']),
     })
 
     const { title, amount, type } = createTransactionSchema.parse(req.body)
@@ -85,7 +87,7 @@ export async function transactionRoutes(app: FastifyInstance) {
 
       res.cookie('sessionId', sessionId, {
         path: '/',
-        maxAge: 1000 * 60 * 60 * 24 * 7 // 7 days
+        maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
       })
     }
 
@@ -94,7 +96,7 @@ export async function transactionRoutes(app: FastifyInstance) {
       id: randomUUID(),
       title,
       amount: type === 'credit' ? amount : amount * -1,
-      session_id: sessionId
+      session_id: sessionId,
     })
 
     return res.status(201).send()
@@ -103,17 +105,17 @@ export async function transactionRoutes(app: FastifyInstance) {
   app.patch(
     '/:id',
     {
-      preHandler: checkSessionIdExists
+      preHandler: checkSessionIdExists,
     },
     async (req, res) => {
       const { sessionId } = req.cookies
       const transactionSchema = z.object({
-        id: z.string().uuid()
+        id: z.string().uuid(),
       })
 
       const createTransactionSchema = z.object({
         title: z.string(),
-        amount: z.number()
+        amount: z.number(),
       })
 
       const { id } = transactionSchema.parse(req.params)
@@ -122,50 +124,52 @@ export async function transactionRoutes(app: FastifyInstance) {
       const transaction = await knex('transactions')
         .where({
           id,
-          session_id: sessionId
+          session_id: sessionId,
         })
         .update({
           title,
-          amount
+          amount,
         })
 
       if (transaction) return transaction
 
       return res.status(404).send()
-    }
+    },
   )
 
   app.delete(
     '/:id',
     {
-      preHandler: checkSessionIdExists
+      preHandler: checkSessionIdExists,
     },
     async (req, res) => {
       const { sessionId } = req.cookies
-      
+
       const transactionSchema = z.object({
-        id: z.string().uuid()
+        id: z.string().uuid(),
       })
 
       const { id } = transactionSchema.parse(req.params)
 
-      const removed = await knex('transactions').where({ id, session_id: sessionId }).delete()
+      const removed = await knex('transactions')
+        .where({ id, session_id: sessionId })
+        .delete()
 
       if (removed) return res.status(200).send()
 
       return res.status(404).send()
-    }
+    },
   )
 
   app.delete(
     '/',
     {
-      preHandler: checkSessionIdExists
+      preHandler: checkSessionIdExists,
     },
     async (req, res) => {
       await knex('transactions').delete()
 
       return res.status(200).send()
-    }
+    },
   )
 }
